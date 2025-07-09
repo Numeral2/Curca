@@ -3,213 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Parking Igra - Prava Fizika</title>
+    <title>Parking Igra - Finalna Ugođena Verzija</title>
     <!-- Import the Inter font from Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     <!-- Import the physics engine, Matter.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.18.0/matter.min.js"></script>
     <style>
         /* Basic styles for the page */
         body, html {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            touch-action: none; /* Prevents scrolling on mobile */
+            height: 100%; margin: 0; padding: 0; overflow: hidden;
+            font-family: 'Inter', sans-serif; background: #dbe1e8;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            touch-action: none;
         }
-
-        /* Container for the entire game interface */
         #game-container {
-            width: 100%;
-            max-width: 500px; /* Max width for larger screens */
-            height: 100%;
-            max-height: 800px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #fff;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border-radius: 20px;
-            overflow: hidden;
-            position: relative;
+            width: 100%; max-width: 500px; height: 100%; max-height: 800px;
+            display: flex; flex-direction: column; background-color: #f5f7fa;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15), 0 5px 15px rgba(0,0,0,0.1);
+            border-radius: 24px; overflow: hidden; position: relative; border: 1px solid #fff;
         }
-
-        /* Styles for the game canvas where the action happens */
-        #game-canvas {
-            width: 100%;
-            flex-grow: 1;
-            position: relative;
+        #game-canvas { width: 100%; flex-grow: 1; position: relative; }
+        canvas { display: block; width: 100%; height: 100%; }
+        #ingame-ui {
+            position: absolute; top: 15px; right: 15px; z-index: 50;
+            display: flex; gap: 10px;
         }
-        
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
+        .ui-button {
+            padding: 8px 16px; font-size: 14px; font-weight: bold; color: #fff;
+            background: rgba(0, 0, 0, 0.5); border: none; border-radius: 8px;
+            cursor: pointer; backdrop-filter: blur(5px);
+            transition: background-color 0.2s ease, transform 0.2s ease;
         }
-
-        /* Styles for the control area at the bottom */
+        .ui-button:hover { background: rgba(0, 0, 0, 0.7); transform: translateY(-1px); }
         #controls {
-            width: 100%;
-            padding: 20px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            background-color: #e9ebee;
-            box-sizing: border-box;
-            user-select: none; /* Prevents text selection on controls */
+            width: 100%; padding: 20px; display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(180deg, #e9ebee, #d8dce1);
+            box-sizing: border-box; user-select: none; border-top: 1px solid #fff;
         }
-
-        /* Styles for the Gas and Brake pedals */
         .pedal {
-            width: 70px;
-            height: 100px;
-            border-radius: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            font-size: 18px;
-            color: white;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2), inset 0 -4px 0 rgba(0,0,0,0.2);
+            width: 80px; height: 120px; border-radius: 18px; display: flex;
+            justify-content: center; align-items: center; font-weight: bold; font-size: 22px;
+            color: white; cursor: pointer;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2), inset 0 -5px 0 rgba(0,0,0,0.25);
             transition: all 0.1s ease;
+            background: linear-gradient(145deg, #4fbf53, #419b44);
+            border: 1px solid rgba(255,255,255,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
-
-        .pedal:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2), inset 0 -2px 0 rgba(0,0,0,0.1);
-        }
-
-        #gas { background-color: #4CAF50; }
-        #brake { background-color: #F44336; }
-
-        /* --- Realistic Steering Wheel Style --- */
+        .pedal:active { transform: translateY(3px); box-shadow: 0 2px 5px rgba(0,0,0,0.25), inset 0 -2px 0 rgba(0,0,0,0.2); }
         #steering-wheel-container {
-            width: 150px;
-            height: 150px;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            width: 150px; height: 150px; position: relative;
+            display: flex; justify-content: center; align-items: center;
         }
-
         #steering-wheel {
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            background-image: radial-gradient(circle, #5a5a5a, #333);
-            border: 6px solid #222;
-            position: relative;
-            cursor: grab;
-            box-shadow: 0 8px 15px rgba(0,0,0,0.3), inset 0 0 10px rgba(0,0,0,0.5);
+            width: 140px; height: 140px; border-radius: 50%;
+            background: linear-gradient(145deg, #404040, #282828);
+            border: 2px solid #666; position: relative; cursor: grab;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.3), inset 0 0 18px rgba(0,0,0,0.6);
+            display: flex; justify-content: center; align-items: center;
         }
-        
         #steering-wheel:active { cursor: grabbing; }
-
-        #steering-wheel .horn {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 50px;
-            height: 50px;
-            background-image: radial-gradient(circle, #777, #555);
-            border-radius: 50%;
-            border: 4px solid #444;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-            z-index: 2;
+        .horn {
+            width: 60px; height: 60px; background: #d92e20; border-radius: 50%;
+            border: 4px solid #e0e0e0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5), inset 0 3px 4px rgba(255,255,255,0.2);
+            z-index: 3; display: flex; justify-content: center; align-items: center;
+            color: white; font-family: 'Orbitron', sans-serif; font-size: 20px;
+            font-weight: 700; text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
         }
-        
-        .spoke {
-            position: absolute;
-            background-color: #444;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-            top: 50%;
-            left: 50%;
-            width: 12px;
-            height: 110%;
-            transform-origin: center;
+        .spoke { position: absolute; background: #4a4a4a; box-shadow: 0 1px 3px rgba(0,0,0,0.4); z-index: 2; }
+        .spoke-horizontal { width: 38%; height: 18px; top: 50%; transform: translateY(-50%); }
+        .spoke-left { left: 2px; border-radius: 9px 0 0 9px; }
+        .spoke-right { right: 2px; border-radius: 0 9px 9px 0; }
+        .spoke-bottom { width: 18px; height: 38%; bottom: 2px; left: 50%; transform: translateX(-50%); border-radius: 0 0 9px 9px; }
+        #gear-shifter {
+            display: flex; flex-direction: column; background-color: #cdd3da;
+            border-radius: 12px; padding: 6px;
+            box-shadow: inset 0 3px 6px rgba(0,0,0,0.2); border: 1px solid #b7bec6;
         }
-        .spoke.spoke-1 { transform: translate(-50%, -50%) rotate(0deg); }
-        .spoke.spoke-2 { transform: translate(-50%, -50%) rotate(120deg); }
-        .spoke.spoke-3 { transform: translate(-50%, -50%) rotate(240deg); }
-
-        /* Message overlay */
+        .gear-button {
+            border: 1px solid transparent; background: transparent; font-size: 24px;
+            font-weight: bold; color: #555; padding: 15px 20px; cursor: pointer;
+            transition: all 0.2s ease; border-radius: 8px;
+            text-shadow: 0 1px 1px rgba(255,255,255,0.7);
+        }
+        .gear-button.active {
+            background: linear-gradient(180deg, #fff, #e8e8e8); color: #d92e20;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15); border-color: #bbb; text-shadow: none;
+        }
         #message-overlay {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            font-size: 1.5em;
-            flex-direction: column;
-            z-index: 100;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s ease;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.75); color: white;
+            display: flex; justify-content: center; align-items: center;
+            text-align: center; font-size: 1.5em; flex-direction: column;
+            z-index: 100; opacity: 0; pointer-events: none;
+            transition: opacity 0.5s ease; backdrop-filter: blur(5px);
         }
-        
         #message-overlay.visible { opacity: 1; pointer-events: all; }
-        #message-content h2 { margin-bottom: 25px; }
+        #message-content h2 { margin-bottom: 15px; }
+        #message-content p { font-size: 0.8em; margin-top: 0; margin-bottom: 20px; }
         #message-content button {
-            margin: 8px;
-            padding: 12px 25px;
-            font-size: 0.6em;
-            border: none;
-            border-radius: 10px;
-            background-color: #4CAF50;
-            color: white;
-            cursor: pointer;
-            font-weight: bold;
-            text-transform: uppercase;
+            margin: 8px; padding: 12px 25px; font-size: 0.6em; border: none;
+            border-radius: 10px; background-color: #4CAF50; color: white;
+            cursor: pointer; font-weight: bold; text-transform: uppercase;
             transition: background-color 0.2s;
         }
         #message-content button:hover { background-color: #45a049; }
         #play-again-button { background-color: #008CBA; }
         #play-again-button:hover { background-color: #007ba7; }
-
+        #love-note {
+            position: absolute; bottom: 10px; left: 10px; color: #000;
+            opacity: 0.4; font-size: 12px; z-index: 50; pointer-events: none;
+        }
+        #rating-display {
+            font-size: 1.5em;
+            color: #FFD700; /* Zlatna boja */
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
 
     <div id="game-container">
         <div id="game-canvas">
+            <div id="ingame-ui">
+                <button id="menu-btn" class="ui-button">Meni</button>
+                <button id="restart-btn" class="ui-button">Restart</button>
+            </div>
             <div id="message-overlay">
                 <div id="message-content">
                     <h2 id="message-title"></h2>
+                    <div id="rating-display"></div>
                     <p id="message-text"></p>
                     <div id="level-selection">
-                        <button class="level-select-button" data-level="1">Nivo 1: Okomito (Lijevo)</button>
-                        <button class="level-select-button" data-level="2">Nivo 2: Okomito (Desno)</button>
+                        <button class="level-select-button" data-level="1">Nivo 1: Normalno</button>
+                        <button class="level-select-button" data-level="2">Nivo 2: Normalno (Desno)</button>
+                        <button class="level-select-button" data-level="3">Nivo 3: Usko</button>
                     </div>
                     <button id="play-again-button" style="display: none;">Igraj Ponovo</button>
                 </div>
             </div>
+            <div id="love-note">Volin te ljube</div>
         </div>
         <div id="controls">
-            <div id="brake" class="pedal">KOČNICA</div>
+            <div id="accelerator" class="pedal">GAS</div>
             <div id="steering-wheel-container">
                 <div id="steering-wheel">
-                    <div class="spoke spoke-1"></div>
-                    <div class="spoke spoke-2"></div>
-                    <div class="spoke spoke-3"></div>
-                    <div class="horn"></div>
+                    <div class="spoke spoke-horizontal spoke-left"></div>
+                    <div class="spoke spoke-horizontal spoke-right"></div>
+                    <div class="spoke spoke-bottom"></div>
+                    <div class="horn">Fiat</div>
                 </div>
             </div>
-            <div id="gas" class="pedal">GAS</div>
+            <div id="gear-shifter">
+                <button id="gear-d" class="gear-button active">D</button>
+                <button id="gear-r" class="gear-button">R</button>
+            </div>
         </div>
     </div>
 
@@ -223,25 +173,31 @@
         const levelSelectionContainer = document.getElementById('level-selection');
         const playAgainButton = document.getElementById('play-again-button');
         const steeringWheel = document.getElementById('steering-wheel');
+        const ratingDisplay = document.getElementById('rating-display');
+
+        const acceleratorPedal = document.getElementById('accelerator');
+        const gearDButton = document.getElementById('gear-d');
+        const gearRButton = document.getElementById('gear-r');
 
         let engine, render, runner, car, goal;
-        let gasOn = false, brakeOn = false, gameOver = false;
-        let currentLevel = 1;
-
-        // --- REALISTIC STEERING MECHANICS VARIABLES ---
-        let isDraggingWheel = false;
-        let wheelTotalRotation = 0;
-        let lastPointerAngle = 0;
-        const MAX_WHEEL_ROTATION = 540; // 1.5 turns each way
-        let physicsSteeringAngle = 0; // Normalized value (-1 to 1) for physics
+        let gameOver = false, currentLevel = 1;
+        let acceleratorOn = false, gear = 'D';
+        let isDraggingWheel = false, wheelTotalRotation = 0, lastPointerAngle = 0;
+        const MAX_WHEEL_ROTATION = 540;
+        let physicsSteeringAngle = 0;
+        let startTime;
 
         // --- INITIALIZATION ---
         function initGame(level) {
-            gameOver = false;
-            gasOn = false; brakeOn = false;
+            gameOver = false; acceleratorOn = false; gear = 'D';
+            updateGearUI();
             wheelTotalRotation = 0; physicsSteeringAngle = 0;
             updateSteeringWheelVisual();
             messageOverlay.classList.remove('visible');
+            document.getElementById('ingame-ui').style.display = 'flex';
+            document.getElementById('love-note').style.display = 'block';
+            ratingDisplay.style.display = 'none';
+            startTime = Date.now();
 
             engine = Engine.create();
             engine.world.gravity.y = 0;
@@ -249,32 +205,33 @@
             const canvasWidth = gameCanvas.clientWidth;
             const canvasHeight = gameCanvas.clientHeight;
             render = Render.create({
-                element: gameCanvas,
-                engine: engine,
-                options: { width: canvasWidth, height: canvasHeight, wireframes: false, background: '#dce4f0' }
+                element: gameCanvas, engine: engine,
+                options: { width: canvasWidth, height: canvasHeight, wireframes: false, background: '#e0e5ec' }
             });
 
-            // --- CREATE GAME OBJECTS ---
-            const carWidth = 40, carHeight = 80;
+            // NOVO: Malo manji automobili
+            const carWidth = 38, carHeight = 76;
             
-            goal = Bodies.rectangle(canvasWidth / 2, canvasHeight * 0.8, carWidth + 10, carHeight + 10, { 
+            const parkingGap = (level === 3) ? 15 : 25;
+
+            goal = Bodies.rectangle(canvasWidth / 2, canvasHeight * 0.8, carWidth + 8, carHeight + 8, { 
                 isSensor: true, isStatic: true,
-                render: { fillStyle: 'rgba(241, 196, 15, 0.4)', strokeStyle: 'rgba(241, 196, 15, 1)', lineWidth: 2 } // Yellow
+                render: { fillStyle: 'rgba(255, 215, 0, 0.3)', strokeStyle: 'rgba(255, 215, 0, 1)', lineWidth: 2 }
             });
 
-            const obstacle1 = Bodies.rectangle(goal.position.x - 65, goal.position.y, carWidth, carHeight, { 
-                isStatic: true, render: { fillStyle: '#95a5a6' } // Gray
+            const obstacle1 = Bodies.rectangle(goal.position.x - (carWidth + parkingGap), goal.position.y, carWidth, carHeight, { 
+                isStatic: true, render: { fillStyle: '#95a5a6' }
             });
-            const obstacle2 = Bodies.rectangle(goal.position.x + 65, goal.position.y, carWidth, carHeight, { 
-                isStatic: true, render: { fillStyle: '#95a5a6' } // Gray
+            const obstacle2 = Bodies.rectangle(goal.position.x + (carWidth + parkingGap), goal.position.y, carWidth, carHeight, { 
+                isStatic: true, render: { fillStyle: '#95a5a6' }
             });
             
             const carInitialY = canvasHeight * 0.4;
-            const carInitialX = (level === 1) ? canvasWidth * 0.25 : canvasWidth * 0.75;
-            const carInitialAngle = (level === 1) ? Math.PI / 2 : -Math.PI / 2;
+            const carInitialX = (level === 1 || level === 3) ? canvasWidth * 0.25 : canvasWidth * 0.75;
+            const carInitialAngle = (level === 1 || level === 3) ? Math.PI / 2 : -Math.PI / 2;
 
             car = Bodies.rectangle(carInitialX, carInitialY, carWidth, carHeight, {
-                angle: carInitialAngle, frictionAir: 0.08, friction: 0.1, restitution: 0.2,
+                angle: carInitialAngle, frictionAir: 0.1, friction: 0.1, restitution: 0.2,
                 render: { visible: false } 
             });
             
@@ -313,89 +270,72 @@
             if (render && render.canvas) render.canvas.remove();
         }
 
-        // --- GAME LOOP & PHYSICS ---
+        // --- GAME LOOP & PHYSICS (MEHANIKA NIJE MIJENJANA) ---
         function onBeforeUpdate() {
             if (gameOver) return;
-
-            // --- Apply forces for Gas and Brake ---
-            const moveForce = 0.002;
-            const brakeForce = 0.001;
-            if (gasOn) Body.applyForce(car, car.position, Vector.rotate(Vector.create(0, -moveForce), car.angle));
-            if (brakeOn) Body.applyForce(car, car.position, Vector.rotate(Vector.create(0, car.speed > 1.5 ? moveForce : brakeForce), car.angle));
-
-            // --- NEW: REALISTIC STEERING LOGIC ---
+            if (acceleratorOn) {
+                const moveForce = 0.0025;
+                let forceVector = (gear === 'D') ? Vector.create(0, -moveForce) : Vector.create(0, moveForce);
+                Body.applyForce(car, car.position, Vector.rotate(forceVector, car.angle));
+            }
             const carSpeed = car.speed;
             if (carSpeed > 0.1) {
-                // 1. Determine direction of travel (forward or reverse)
                 const forwardVector = Vector.rotate(Vector.create(0, -1), car.angle);
                 const dotProduct = Vector.dot(car.velocity, forwardVector);
                 const isReversing = dotProduct < 0;
-
-                // 2. Calculate base turning force
                 const turnSensitivity = 0.02;
                 let turnAngle = physicsSteeringAngle * turnSensitivity * (carSpeed / 3);
-
-                // 3. Invert turning direction if in reverse
-                if (isReversing) {
-                    turnAngle *= -1;
-                }
-
-                // 4. Apply angular velocity
+                if (isReversing) { turnAngle *= -1; }
                 Body.setAngularVelocity(car, turnAngle);
-            } else {
-                 Body.setAngularVelocity(car, 0);
-            }
-            
+            } else { Body.setAngularVelocity(car, 0); }
             checkWinCondition();
         }
         
-        // --- CUSTOM CAR & WHEEL RENDERING ---
+        // --- CUSTOM CAR RENDERING ---
         function drawCarDetails() {
             const ctx = render.context;
-            const pos = car.position;
-            const angle = car.angle;
-            const carWidth = 40, carHeight = 80;
-
-            ctx.save();
-            ctx.translate(pos.x, pos.y);
-            ctx.rotate(angle);
-
-            ctx.fillStyle = gameOver ? '#a04040' : '#e74c3c'; // Red car
+            const pos = car.position; const angle = car.angle;
+            const carWidth = 38, carHeight = 76; // Koristi nove, manje dimenzije
+            ctx.save(); ctx.translate(pos.x, pos.y); ctx.rotate(angle);
+            ctx.fillStyle = gameOver ? '#a04040' : '#e74c3c';
             ctx.fillRect(-carWidth / 2, -carHeight / 2, carWidth, carHeight);
-            
             ctx.fillStyle = '#aaddff';
-            ctx.fillRect(-carWidth/2 + 5, -carHeight/2 + 5, carWidth - 10, 20);
-
-            const wheelWidth = 8, wheelHeight = 18;
+            ctx.fillRect(-carWidth/2 + 4, -carHeight/2 + 4, carWidth - 8, 18);
+            const wheelWidth = 7, wheelHeight = 16;
             const wheelXOffset = carWidth / 2, wheelYOffset = carHeight / 3;
             const frontWheelAngle = physicsSteeringAngle * (Math.PI / 6);
-
             drawWheel(ctx, -wheelXOffset, wheelYOffset, wheelWidth, wheelHeight, 0);
             drawWheel(ctx, wheelXOffset, wheelYOffset, wheelWidth, wheelHeight, 0);
             drawWheel(ctx, -wheelXOffset, -wheelYOffset, wheelWidth, wheelHeight, frontWheelAngle);
             drawWheel(ctx, wheelXOffset, -wheelYOffset, wheelWidth, wheelHeight, frontWheelAngle);
-
             ctx.restore();
         }
-
         function drawWheel(ctx, x, y, width, height, angle) {
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate(angle);
-            ctx.fillStyle = '#333';
-            ctx.fillRect(-width / 2, -height / 2, width, height);
+            ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
+            ctx.fillStyle = '#333'; ctx.fillRect(-width / 2, -height / 2, width, height);
             ctx.restore();
         }
 
         // --- WIN/LOSS & UI ---
         function checkWinCondition() {
-            const isInside = Bounds.overlaps(car.bounds, goal.bounds);
+            const vertices = car.vertices;
+            const goalBounds = goal.bounds;
+            let isFullyInside = true;
+            for (const vertex of vertices) {
+                if (!Bounds.contains(goalBounds, vertex)) {
+                    isFullyInside = false;
+                    break;
+                }
+            }
+
             const normalizedCarAngle = (car.angle % Math.PI + Math.PI) % Math.PI;
             const angleDiff = Math.abs(normalizedCarAngle);
             const isAligned = angleDiff < 0.15 || (Math.PI - angleDiff) < 0.15;
             const isStopped = car.speed < 0.05 && Math.abs(car.angularVelocity) < 0.05;
 
-            if (isInside && isAligned && isStopped) endGame(true);
+            if (isFullyInside && isAligned && isStopped) {
+                endGame(true);
+            }
         }
 
         function onCollision(event) {
@@ -403,8 +343,7 @@
             for (const pair of event.pairs) {
                 if ((pair.bodyA === car || pair.bodyB === car) && !pair.isSensor) {
                     if (pair.collision.depth > 1) {
-                        endGame(false);
-                        break;
+                        endGame(false); break;
                     }
                 }
             }
@@ -413,9 +352,13 @@
         function showStartScreen() {
             cleanupGame();
             messageTitle.textContent = 'Parking Izazov';
-            messageText.textContent = 'Odaberi stranu za početak.';
-            levelSelectionContainer.style.display = 'block';
+            messageText.textContent = 'Odaberi nivo težine.';
+            levelSelectionContainer.style.display = 'flex';
+            levelSelectionContainer.style.flexDirection = 'column';
             playAgainButton.style.display = 'none';
+            document.getElementById('ingame-ui').style.display = 'none';
+            document.getElementById('love-note').style.display = 'none';
+            ratingDisplay.style.display = 'none';
             messageOverlay.classList.add('visible');
         }
 
@@ -423,10 +366,30 @@
             if (gameOver) return;
             gameOver = true;
             Runner.stop(runner);
-            messageTitle.textContent = isWin ? 'Majstorski Parkirano!' : 'Ups! Sudar!';
-            messageText.textContent = isWin ? 'Svaka čast!' : 'Više sreće drugi put.';
+            
+            if (isWin) {
+                const elapsedTime = (Date.now() - startTime) / 1000;
+                // NOVO: Logika za ocjene
+                let stars = 0;
+                if (elapsedTime <= 15) stars = 5;
+                else if (elapsedTime <= 20) stars = 4;
+                else if (elapsedTime <= 25) stars = 3;
+                else if (elapsedTime <= 30) stars = 2;
+                else stars = 1;
+
+                ratingDisplay.innerHTML = '★'.repeat(stars) + '☆'.repeat(5 - stars);
+                ratingDisplay.style.display = 'block';
+                messageTitle.textContent = 'Majstorski Parkirano!';
+                messageText.textContent = `Vrijeme: ${elapsedTime.toFixed(2)}s. Svaka čast, ljube!`;
+            } else {
+                ratingDisplay.style.display = 'none';
+                messageTitle.textContent = 'Ups! Sudar!';
+                messageText.textContent = 'Više sreće drugi put.';
+            }
+
             levelSelectionContainer.style.display = 'none';
             playAgainButton.style.display = 'inline-block';
+            document.getElementById('ingame-ui').style.display = 'none';
             messageOverlay.classList.add('visible');
         }
         
@@ -443,18 +406,14 @@
             window.addEventListener('touchend', handleDragEnd);
             window.addEventListener('mousemove', handleDragMove);
             window.addEventListener('touchmove', handleDragMove, { passive: false });
-
-            const gasPedal = document.getElementById('gas');
-            const brakePedal = document.getElementById('brake');
             ['mousedown', 'touchstart'].forEach(evt => {
-                gasPedal.addEventListener(evt, e => { e.preventDefault(); gasOn = true; });
-                brakePedal.addEventListener(evt, e => { e.preventDefault(); brakeOn = true; });
+                acceleratorPedal.addEventListener(evt, e => { e.preventDefault(); acceleratorOn = true; });
             });
             ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
-                gasPedal.addEventListener(evt, () => gasOn = false);
-                brakePedal.addEventListener(evt, () => brakeOn = false);
+                acceleratorPedal.addEventListener(evt, () => acceleratorOn = false);
             });
-            
+            gearDButton.addEventListener('click', () => { gear = 'D'; updateGearUI(); });
+            gearRButton.addEventListener('click', () => { gear = 'R'; updateGearUI(); });
             document.querySelectorAll('.level-select-button').forEach(button => {
                 button.addEventListener('click', () => {
                     currentLevel = parseInt(button.dataset.level, 10);
@@ -462,6 +421,8 @@
                 });
             });
             playAgainButton.addEventListener('click', resetGame);
+            document.getElementById('restart-btn').addEventListener('click', resetGame);
+            document.getElementById('menu-btn').addEventListener('click', showStartScreen);
             window.addEventListener('resize', () => { engine ? resetGame() : showStartScreen(); });
         }
         
@@ -473,14 +434,11 @@
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
             return Math.atan2(clientY - centerY, clientX - centerX) * 180 / Math.PI;
         }
-
         function handleDragStart(e) {
-            e.preventDefault();
-            isDraggingWheel = true;
+            e.preventDefault(); isDraggingWheel = true;
             steeringWheel.style.cursor = 'grabbing';
             lastPointerAngle = getPointerAngle(e);
         }
-
         function handleDragMove(e) {
             if (!isDraggingWheel) return;
             e.preventDefault();
@@ -493,14 +451,11 @@
             lastPointerAngle = currentPointerAngle;
             updateSteeringWheelVisual();
         }
-
-        function handleDragEnd() {
-            isDraggingWheel = false;
-            steeringWheel.style.cursor = 'grab';
-        }
-        
-        function updateSteeringWheelVisual() {
-            steeringWheel.style.transform = `rotate(${wheelTotalRotation}deg)`;
+        function handleDragEnd() { isDraggingWheel = false; steeringWheel.style.cursor = 'grab'; }
+        function updateSteeringWheelVisual() { steeringWheel.style.transform = `rotate(${wheelTotalRotation}deg)`; }
+        function updateGearUI() {
+            gearDButton.classList.toggle('active', gear === 'D');
+            gearRButton.classList.toggle('active', gear === 'R');
         }
 
         // --- START THE GAME ---
